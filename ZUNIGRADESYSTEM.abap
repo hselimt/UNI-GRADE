@@ -1,13 +1,13 @@
-REPORT ZUNIGRADESYSTEM.
+REPORT zunigradesystem.
 
 CLASS lcl_grade_converter DEFINITION.
   PUBLIC SECTION.
     CLASS-METHODS:
       convertscoretograde
         IMPORTING
-          iv_score TYPE ZSTUDENT_SCORE_DE
+          iv_score        TYPE zstudent_score_de
         RETURNING
-          VALUE(rv_grade) TYPE ZSTUDENT_GRADE_DE.
+          VALUE(rv_grade) TYPE zstudent_grade_de.
 ENDCLASS.
 
 CLASS lcl_grade_converter IMPLEMENTATION.
@@ -32,61 +32,61 @@ CLASS lcl_grade_converter IMPLEMENTATION.
   ENDMETHOD.
 ENDCLASS.
 
-DATA: gv_studentID TYPE ZSTUDENTID_DE,
-      gv_studentName TYPE ZSTUDENTNAME_DE,
-      gv_studentGender TYPE ZSTUDENTGEN_DE,
-      gv_studentScore TYPE ZSTUDENT_SCORE_DE,
-      gv_studentGrade TYPE ZSTUDENT_GRADE_DE,
-      gs_student_t TYPE ZSTUDENT_T,
-      gt_student_t TYPE TABLE OF ZSTUDENT_T,
-      gs_failed_t TYPE ZFSTUDENT_T,
-      gt_failed_t TYPE TABLE OF ZFSTUDENT_T.
+DATA: gv_studentID     TYPE zstudentid_de,
+      gv_studentName   TYPE zstudentname_de,
+      gv_studentGender TYPE zstudentgen_de,
+      gv_studentScore  TYPE zstudent_score_de,
+      gv_studentGrade  TYPE zstudent_grade_de,
+      gs_student_t     TYPE zstudent_t,
+      gt_student_t     TYPE TABLE OF zstudent_t,
+      gs_failed_t      TYPE zfstudent_t,
+      gt_failed_t      TYPE TABLE OF zfstudent_t.
 
-DATA: lv_next_student_id TYPE ZSTUDENTID_DE,
-      ls_max_grade_student TYPE ZSTUDENT_T,
-      lv_max_grade_student TYPE ZSTUDENT_SCORE_DE VALUE 0.
+DATA: lv_next_student_id   TYPE zstudentid_de,
+      ls_max_grade_student TYPE zstudent_t,
+      lv_max_grade_student TYPE zstudent_score_de VALUE 0.
 
 
-SELECTION-SCREEN BEGIN OF BLOCK stud_inf WITH FRAME TITLE text-001.
-  PARAMETERS: p_name TYPE ZSTUDENTNAME_DE LOWER CASE.
-  PARAMETERS: p_score TYPE ZSTUDENT_SCORE_DE,
+SELECTION-SCREEN BEGIN OF BLOCK stud_inf WITH FRAME TITLE TEXT-001.
+  PARAMETERS: p_name TYPE zstudentname_de LOWER CASE.
+  PARAMETERS: p_score  TYPE zstudent_score_de,
               p_male   RADIOBUTTON GROUP gen,
               p_female RADIOBUTTON GROUP gen.
 SELECTION-SCREEN END OF BLOCK stud_inf.
 
 SELECTION-SCREEN SKIP 1.
 
-SELECTION-SCREEN BEGIN OF BLOCK search WITH FRAME TITLE text-005.
+SELECTION-SCREEN BEGIN OF BLOCK search WITH FRAME TITLE TEXT-005.
 
   SELECTION-SCREEN BEGIN OF BLOCK sname.
-    PARAMETERS: p_sname TYPE ZSTUDENTNAME_DE LOWER CASE.
-    PARAMETERS: p_sid TYPE ZSTUDENTID_DE.
+    PARAMETERS: p_sname TYPE zstudentname_de LOWER CASE.
+    PARAMETERS: p_sid TYPE zstudentid_de.
   SELECTION-SCREEN END OF BLOCK sname.
 
 SELECTION-SCREEN END OF BLOCK search.
 
 SELECTION-SCREEN SKIP 1.
 
-SELECTION-SCREEN BEGIN OF BLOCK update WITH FRAME TITLE text-006.
+SELECTION-SCREEN BEGIN OF BLOCK update WITH FRAME TITLE TEXT-006.
 
   SELECTION-SCREEN BEGIN OF BLOCK usid.
-    PARAMETERS: P_uid TYPE ZSTUDENTID_DE.
+    PARAMETERS: P_uid TYPE zstudentid_de.
   SELECTION-SCREEN END OF BLOCK usid.
 
 SELECTION-SCREEN END OF BLOCK update.
 
 SELECTION-SCREEN SKIP 1.
 
-SELECTION-SCREEN BEGIN OF BLOCK ops WITH FRAME TITLE text-003.
-  PARAMETERS: p_add AS CHECKBOX,
+SELECTION-SCREEN BEGIN OF BLOCK ops WITH FRAME TITLE TEXT-003.
+  PARAMETERS: p_add    AS CHECKBOX,
               p_update AS CHECKBOX,
-              p_clear AS CHECKBOX,
-              p_stats AS CHECKBOX.
+              p_clear  AS CHECKBOX,
+              p_stats  AS CHECKBOX.
 SELECTION-SCREEN END OF BLOCK ops.
 
 SELECTION-SCREEN SKIP 1.
 
-SELECTION-SCREEN BEGIN OF BLOCK filter WITH FRAME TITLE text-004.
+SELECTION-SCREEN BEGIN OF BLOCK filter WITH FRAME TITLE TEXT-004.
   SELECT-OPTIONS: s_score FOR gs_student_t-studentscore.
 SELECTION-SCREEN END OF BLOCK filter.
 
@@ -119,15 +119,15 @@ FORM clear_all_data_with_popup.
   DATA: lv_answer TYPE c.
 
   CALL FUNCTION 'POPUP_TO_CONFIRM'
-  EXPORTING
-    titlebar              = 'CONFIRM DATA DELETION'
-    text_question         = 'YOU WANT TO DELETE ALL STUDENT DATA?'
-    text_button_1         = 'YES'
-    text_button_2         = 'NO'
-    default_button        = '2'
-    display_cancel_button = space
-  IMPORTING
-    answer                = lv_answer.
+    EXPORTING
+      titlebar              = 'CONFIRM DATA DELETION'
+      text_question         = 'YOU WANT TO DELETE ALL STUDENT DATA?'
+      text_button_1         = 'YES'
+      text_button_2         = 'NO'
+      default_button        = '2'
+      display_cancel_button = space
+    IMPORTING
+      answer                = lv_answer.
 
   IF lv_answer = '1'.
     DELETE FROM zstudent_t.
@@ -205,10 +205,10 @@ FORM display_failed_students.
 ENDFORM.
 
 FORM display_statistics.
-  DATA: lv_total    TYPE i,
-        lv_avg      TYPE p DECIMALS 2,
-        lv_passed   TYPE i,
-        lv_failed   TYPE i.
+  DATA: lv_total  TYPE i,
+        lv_avg    TYPE p DECIMALS 2,
+        lv_passed TYPE i,
+        lv_failed TYPE i.
 
   SELECT COUNT(*) FROM zstudent_t INTO @lv_total.
   SELECT AVG( studentscore ) FROM zstudent_t INTO @lv_avg.
@@ -230,17 +230,17 @@ FORM initialize_data.
 ENDFORM.
 
 FORM load_student_data.
-  SELECT * FROM ZSTUDENT_T
+  SELECT * FROM zstudent_t
     INTO CORRESPONDING FIELDS OF TABLE @gt_student_t.
 ENDFORM.
 
 FORM load_failed_student_data.
-  SELECT * FROM ZFSTUDENT_T
+  SELECT * FROM zfstudent_t
     INTO CORRESPONDING FIELDS OF TABLE @gt_failed_t.
 ENDFORM.
 
 FORM calculate_next_student_id.
-  SELECT MAX( studentID ) FROM ZSTUDENT_T INTO @lv_next_student_id.
+  SELECT MAX( studentID ) FROM zstudent_t INTO @lv_next_student_id.
 
   IF sy-subrc NE 0.
     lv_next_student_id = 1.
@@ -251,7 +251,7 @@ ENDFORM.
 
 FORM search_student_by_id.
 
-  SELECT SINGLE * FROM ZSTUDENT_T
+  SELECT SINGLE * FROM zstudent_t
     INTO @gs_student_t
     WHERE studentid EQ @p_sid.
   IF sy-subrc = 0.
@@ -270,7 +270,7 @@ ENDFORM.
 
 FORM search_student_by_name.
 
-  SELECT SINGLE * FROM ZSTUDENT_T
+  SELECT SINGLE * FROM zstudent_t
     INTO @gs_student_t
     WHERE studentname EQ @p_sname.
   IF sy-subrc = 0.
@@ -289,7 +289,7 @@ ENDFORM.
 
 FORM update_student_by_id.
 
-  SELECT SINGLE * FROM ZSTUDENT_T
+  SELECT SINGLE * FROM zstudent_t
     INTO @gs_student_t
     WHERE studentid EQ @p_uid.
 
@@ -303,7 +303,7 @@ FORM update_student_by_id.
       gs_student_t-studentgen = 'F'.
     ENDIF.
 
-    UPDATE zstudent_t from gs_student_t.
+    UPDATE zstudent_t FROM gs_student_t.
 
     IF sy-subrc = 0.
       COMMIT WORK.
@@ -340,7 +340,7 @@ FORM prepare_student_record.
 ENDFORM.
 
 FORM save_student_record.
-  INSERT ZSTUDENT_T FROM @gs_student_t.
+  INSERT zstudent_t FROM @gs_student_t.
 
   IF sy-subrc = 0.
     COMMIT WORK.
@@ -370,7 +370,7 @@ FORM upgrade_student_grade.
   gs_student_t-studentgrade = 'DD'.
   gs_student_t-studentscore = 35.
 
-  UPDATE ZSTUDENT_T SET studentgrade = @gs_student_t-studentgrade,
+  UPDATE zstudent_t SET studentgrade = @gs_student_t-studentgrade,
                         studentscore = @gs_student_t-studentscore
                     WHERE studentid = @gs_student_t-studentid.
 
@@ -384,7 +384,7 @@ FORM add_to_failed_students.
   CLEAR gs_failed_t.
   MOVE-CORRESPONDING gs_student_t TO gs_failed_t.
 
-  INSERT ZFSTUDENT_T FROM @gs_failed_t.
+  INSERT zfstudent_t FROM @gs_failed_t.
 
   IF sy-subrc = 0.
     COMMIT WORK.
@@ -418,7 +418,7 @@ FORM find_top_student.
 ENDFORM.
 
 FORM list_students_by_score.
-  SELECT * FROM ZSTUDENT_T
+  SELECT * FROM zstudent_t
     INTO TABLE @gt_student_t
     WHERE studentscore IN @s_score.
 
