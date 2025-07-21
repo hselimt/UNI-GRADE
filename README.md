@@ -41,6 +41,38 @@ UNIVERSITY GRADE SYSTEM CODED IN ABAP
 | STUDENTSCORE | ZSTUDENT_SCORE_DE | | Test Score |
 | STUDENTGRADE | ZSTUDENT_GRADE_DE | | Letter Grade |
 
+
+# Text Elements
+
+## Text Symbols
+
+| Symbol ID | Text | Length | Max |
+|-----------|------|--------|-----|
+| TEXT-001 | STUDENT INFO | 12 | 16 |
+| TEXT-002 | GENDER | 6 | 16 |
+| TEXT-003 | OPERATIONS | 10 | 13 |
+| TEXT-004 | FILTER SCORES | 13 | 25 |
+| TEXT-005 | SEARCH STUDENT | 14 | 25 |
+| TEXT-006 | UPDATE STUDENT | 14 | 24 |
+
+## Selection Texts
+
+| Parameter | Text | DDIC Reference |
+|-----------|------|----------------|
+| P_ADD | ADD STUDENT | |
+| P_CLEAR | DELETE ALL STUDENTS | |
+| P_FEMALE | FEMALE | |
+| P_MALE | MALE | |
+| P_NAME | STUDENT FULLNAME | |
+| P_SCORE | STUDENT SCORE | |
+| P_SID | BY ID | |
+| P_SNAME | BY FULLNAME | |
+| P_STATS | SHOW STATS | |
+| P_UID | BY ID | |
+| P_UPDATE | UPDATE STUDENT | |
+| S_SCORE | FILTER SCORE | |
+
+
 ## 📊 Grade Scale
 
 | Score Range | Grade | Description |
