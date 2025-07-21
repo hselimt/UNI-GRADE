@@ -152,7 +152,7 @@ FORM display_selected_information.
     PERFORM display_added_student_details.
   ENDIF.
 
-  IF p_update EQ 'X' AND gs_student_t IS NOT INITIAL AND p_score >= 0 AND p_score <= 100.
+  IF p_update EQ 'X' AND p_score >= 0 AND p_score <= 100.
     PERFORM update_student_by_id.
   ENDIF.
 
