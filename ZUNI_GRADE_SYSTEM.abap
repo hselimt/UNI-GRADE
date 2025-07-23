@@ -5,22 +5,22 @@ INCLUDE zuni_grade_system_data.
 INCLUDE zuni_grade_system_class.
 
 SELECTION-SCREEN BEGIN OF BLOCK stud_inf WITH FRAME TITLE TEXT-001.
-  PARAMETERS: p_name    TYPE zstudentname_de LOWER CASE,
-              p_lname   TYPE zstudentlname_de LOWER CASE,
-              p_bdate   TYPE zstudentbdate_de,
-              p_score   TYPE zstudent_score_de,
-              p_mail    TYPE zstudentmail_de,
-              p_male    RADIOBUTTON GROUP gen,
-              p_female  RADIOBUTTON GROUP gen.
+  PARAMETERS: p_name   TYPE zstudentname_de LOWER CASE,
+              p_lname  TYPE zstudentlname_de LOWER CASE,
+              p_bdate  TYPE zstudentbdate_de,
+              p_score  TYPE zstudent_score_de,
+              p_mail   TYPE zstudentmail_de,
+              p_male   RADIOBUTTON GROUP gen,
+              p_female RADIOBUTTON GROUP gen.
 SELECTION-SCREEN END OF BLOCK stud_inf.
 
 SELECTION-SCREEN SKIP 1.
 
 SELECTION-SCREEN BEGIN OF BLOCK search WITH FRAME TITLE TEXT-005.
   SELECTION-SCREEN BEGIN OF BLOCK sname.
-    PARAMETERS: p_sname TYPE zstudentname_de LOWER CASE,
+    PARAMETERS: p_sname  TYPE zstudentname_de LOWER CASE,
                 p_slname TYPE zstudentlname_de LOWER CASE,
-                p_sid   TYPE zstudentid_de.
+                p_sid    TYPE zstudentid_de.
   SELECTION-SCREEN END OF BLOCK sname.
 SELECTION-SCREEN END OF BLOCK search.
 
@@ -35,10 +35,10 @@ SELECTION-SCREEN END OF BLOCK update.
 SELECTION-SCREEN SKIP 1.
 
 SELECTION-SCREEN BEGIN OF BLOCK ops WITH FRAME TITLE TEXT-003.
-  PARAMETERS: p_add     AS CHECKBOX,
-              p_update  AS CHECKBOX,
-              p_clear   AS CHECKBOX,
-              p_stats   AS CHECKBOX.
+  PARAMETERS: p_add    AS CHECKBOX,
+              p_update AS CHECKBOX,
+              p_clear  AS CHECKBOX,
+              p_stats  AS CHECKBOX.
 SELECTION-SCREEN END OF BLOCK ops.
 
 SELECTION-SCREEN SKIP 1.
@@ -74,14 +74,14 @@ FORM clear_all_data_with_popup.
 
   CALL FUNCTION 'POPUP_TO_CONFIRM'
     EXPORTING
-      titlebar            = 'CONFIRM DATA DELETION'
-      text_question       = 'YOU WANT TO DELETE ALL STUDENT DATA?'
-      text_button_1       = 'YES'
-      text_button_2       = 'NO'
-      default_button      = '2'
+      titlebar              = 'CONFIRM DATA DELETION'
+      text_question         = 'YOU WANT TO DELETE ALL STUDENT DATA?'
+      text_button_1         = 'YES'
+      text_button_2         = 'NO'
+      default_button        = '2'
       display_cancel_button = space
     IMPORTING
-      answer              = lv_answer.
+      answer                = lv_answer.
 
   IF lv_answer = '1'.
     DELETE FROM zstudent_t.
@@ -199,15 +199,15 @@ ENDFORM.
 FORM create_student_salv.
   SELECT * FROM zstudent_t
     INTO CORRESPONDING FIELDS OF TABLE @gt_student_t.
-    TRY.
+  TRY.
       cl_salv_table=>factory(
         IMPORTING
           r_salv_table = go_salv_students
         CHANGING
           t_table      = gt_student_t
       ).
-    CATCH CX_SALV_MSG.
-    ENDTRY.
+    CATCH cx_salv_msg.
+  ENDTRY.
 
   go_salv_students->display( ).
 ENDFORM.
@@ -334,7 +334,7 @@ FORM prepare_student_record.
   ELSEIF p_female EQ 'X'.
     gs_student_t-studentgen = 'F'.
   ENDIF.
-  
+
   IF p_bdate < sy-datum AND p_mail CS '@' AND p_mail CS '.'.
     APPEND gs_student_t TO gt_student_t.
   ELSE.
