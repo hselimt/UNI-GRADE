@@ -5,22 +5,22 @@ INCLUDE zuni_grade_system_data.
 INCLUDE zuni_grade_system_class.
 
 SELECTION-SCREEN BEGIN OF BLOCK stud_inf WITH FRAME TITLE TEXT-001.
-  PARAMETERS: p_name   TYPE zstudentname_de LOWER CASE,
-              p_lname  TYPE zstudentlname_de LOWER CASE,
-              p_bdate  TYPE zstudentbdate_de,
-              p_score  TYPE zstudent_score_de,
-              p_mail   TYPE zstudentmail_de,
-              p_male   RADIOBUTTON GROUP gen,
-              p_female RADIOBUTTON GROUP gen.
+  PARAMETERS: p_name    TYPE zstudentname_de LOWER CASE,
+              p_lname   TYPE zstudentlname_de LOWER CASE,
+              p_bdate   TYPE zstudentbdate_de,
+              p_score   TYPE zstudent_score_de,
+              p_mail    TYPE zstudentmail_de,
+              p_male    RADIOBUTTON GROUP gen,
+              p_female  RADIOBUTTON GROUP gen.
 SELECTION-SCREEN END OF BLOCK stud_inf.
 
 SELECTION-SCREEN SKIP 1.
 
 SELECTION-SCREEN BEGIN OF BLOCK search WITH FRAME TITLE TEXT-005.
   SELECTION-SCREEN BEGIN OF BLOCK sname.
-    PARAMETERS: p_sname  TYPE zstudentname_de LOWER CASE,
+    PARAMETERS: p_sname TYPE zstudentname_de LOWER CASE,
                 p_slname TYPE zstudentlname_de LOWER CASE,
-                p_sid    TYPE zstudentid_de.
+                p_sid   TYPE zstudentid_de.
   SELECTION-SCREEN END OF BLOCK sname.
 SELECTION-SCREEN END OF BLOCK search.
 
@@ -35,10 +35,10 @@ SELECTION-SCREEN END OF BLOCK update.
 SELECTION-SCREEN SKIP 1.
 
 SELECTION-SCREEN BEGIN OF BLOCK ops WITH FRAME TITLE TEXT-003.
-  PARAMETERS: p_add    AS CHECKBOX,
-              p_update AS CHECKBOX,
-              p_clear  AS CHECKBOX,
-              p_stats  AS CHECKBOX.
+  PARAMETERS: p_add     AS CHECKBOX,
+              p_update  AS CHECKBOX,
+              p_clear   AS CHECKBOX,
+              p_stats   AS CHECKBOX.
 SELECTION-SCREEN END OF BLOCK ops.
 
 SELECTION-SCREEN SKIP 1.
@@ -74,14 +74,14 @@ FORM clear_all_data_with_popup.
 
   CALL FUNCTION 'POPUP_TO_CONFIRM'
     EXPORTING
-      titlebar              = 'CONFIRM DATA DELETION'
-      text_question         = 'YOU WANT TO DELETE ALL STUDENT DATA?'
-      text_button_1         = 'YES'
-      text_button_2         = 'NO'
-      default_button        = '2'
+      titlebar            = 'CONFIRM DATA DELETION'
+      text_question       = 'YOU WANT TO DELETE ALL STUDENT DATA?'
+      text_button_1       = 'YES'
+      text_button_2       = 'NO'
+      default_button      = '2'
       display_cancel_button = space
     IMPORTING
-      answer                = lv_answer.
+      answer              = lv_answer.
 
   IF lv_answer = '1'.
     DELETE FROM zstudent_t.
@@ -184,12 +184,34 @@ FORM initialize_data.
   PERFORM load_student_data.
   PERFORM load_failed_student_data.
   PERFORM calculate_next_student_id.
+  PERFORM update_age_of_all_students.
 ENDFORM.
 
 FORM load_student_data.
   SELECT * FROM zstudent_t
     INTO CORRESPONDING FIELDS OF TABLE @gt_student_t.
 ENDFORM.
+
+FORM update_age_of_all_students.
+  SELECT * FROM zstudent_t
+    INTO TABLE gt_student_t.
+
+  LOOP AT gt_student_t INTO gs_student_t.
+    DATA(lv_new_age) = lcl_age_calculator=>calculate_age( gs_student_t-studentbdate ).
+
+    IF lv_new_age NE gs_student_t-studentage.
+      gs_student_t-studentage = lv_new_age.
+
+      UPDATE zstudent_t SET studentage = lv_new_age
+                        WHERE studentid = gs_student_t-studentid.
+    ENDIF.
+
+  ENDLOOP.
+
+  COMMIT WORK.
+
+ ENDFORM.
+
 
 FORM load_failed_student_data.
   SELECT * FROM zfstudent_t
@@ -199,15 +221,15 @@ ENDFORM.
 FORM create_student_salv.
   SELECT * FROM zstudent_t
     INTO CORRESPONDING FIELDS OF TABLE @gt_student_t.
-  TRY.
+    TRY.
       cl_salv_table=>factory(
         IMPORTING
           r_salv_table = go_salv_students
         CHANGING
           t_table      = gt_student_t
       ).
-    CATCH cx_salv_msg.
-  ENDTRY.
+    CATCH CX_SALV_MSG.
+    ENDTRY.
 
   go_salv_students->display( ).
 ENDFORM.
@@ -335,11 +357,12 @@ FORM prepare_student_record.
     gs_student_t-studentgen = 'F'.
   ENDIF.
 
-  IF p_bdate < sy-datum AND p_mail CS '@' AND p_mail CS '.'.
+  IF p_bdate <= sy-datum AND p_mail CS '@' AND p_mail CS '.'.
     APPEND gs_student_t TO gt_student_t.
   ELSE.
     MESSAGE 'MAKE SURE TO ENTER VALID VALUES' TYPE 'E'.
   ENDIF.
+
 ENDFORM.
 
 FORM save_student_record.
