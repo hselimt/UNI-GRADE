@@ -1,7 +1,7 @@
 # UNI-GRADE
 UNIVERSITY GRADE SYSTEM CODED IN ABAP
 
-![Selection Screen](UGS.png)
+![Selection Screen](ZUGS.png)
 
 ## Features
 - Full CRUD operations (Create, Read, Update, Delete)
