@@ -32,19 +32,8 @@ CLASS lcl_grade_converter IMPLEMENTATION.
   ENDMETHOD.
 ENDCLASS.
 
-DATA: gv_studentID     TYPE zstudentid_de,
-      gv_studentName   TYPE zstudentname_de,
-      gv_studentGender TYPE zstudentgen_de,
-      gv_studentScore  TYPE zstudent_score_de,
-      gv_studentGrade  TYPE zstudent_grade_de,
-      gs_student_t     TYPE zstudent_t,
-      gt_student_t     TYPE TABLE OF zstudent_t,
-      gs_failed_t      TYPE zfstudent_t,
-      gt_failed_t      TYPE TABLE OF zfstudent_t.
-
-DATA: lv_next_student_id   TYPE zstudentid_de,
-      ls_max_grade_student TYPE zstudent_t,
-      lv_max_grade_student TYPE zstudent_score_de VALUE 0.
+INCLUDE <icon>.
+INCLUDE ZUNI_GRADE_SYSTEM_DATA.
 
 
 SELECTION-SCREEN BEGIN OF BLOCK stud_inf WITH FRAME TITLE TEXT-001.
@@ -176,19 +165,19 @@ FORM display_selected_information.
 ENDFORM.
 
 FORM display_added_student_details.
-  WRITE: /1 '📝 NEW STUDENT'.
-  WRITE: /3 '├─ STUDENT ID     ', gs_student_t-studentid.
-  WRITE: /3 '├─ NAME           ', gs_student_t-studentname.
-  WRITE: /3 '├─ GENDER         ', gs_student_t-studentgen.
-  WRITE: /3 '├─ SCORE          ', gs_student_t-studentscore.
-  WRITE: /3 '└─ GRADE          ', gs_student_t-studentgrade.
+  WRITE: /1  '@0V@', 'NEW STUDENT'.
+  WRITE: /3 '├─ STUDENT ID     ', gs_student_t-studentid COLOR COL_HEADING.
+  WRITE: /3 '├─ NAME           ', gs_student_t-studentname COLOR COL_NORMAL.
+  WRITE: /3 '├─ GENDER         ', gs_student_t-studentgen COLOR COL_NORMAL.
+  WRITE: /3 '├─ SCORE          ', gs_student_t-studentscore COLOR COL_NORMAL.
+  WRITE: /3 '└─ GRADE          ', gs_student_t-studentgrade COLOR COL_NORMAL.
   WRITE: /.
 ENDFORM.
 
 FORM display_failed_students.
   DATA: lv_count TYPE i.
 
-  WRITE: /1 '❌ FAILED STUDENTS'.
+  WRITE: /1 '@17@', 'FAILED STUDENTS'.
 
   SELECT COUNT(*) FROM zfstudent_t INTO @lv_count.
 
@@ -199,7 +188,7 @@ FORM display_failed_students.
       WRITE: /3 '├─  ', gs_failed_t-studentname.
     ENDLOOP.
   ELSE.
-    WRITE: /3 '└─ ⚠️  NO DATA FOUND'.
+    WRITE: /3 '└─ ','@0A@','NO DATA FOUND'.
   ENDIF.
   WRITE: /.
 ENDFORM.
@@ -215,7 +204,7 @@ FORM display_statistics.
   SELECT COUNT(*) FROM zstudent_t INTO @lv_passed WHERE studentscore >= 35.
   lv_failed = lv_total - lv_passed.
 
-  WRITE: /1 '📊 STATS'.
+  WRITE: /1  '@17@', 'STATS'.
   WRITE: /3 '├─ STUDENTS      ', lv_total.
   WRITE: /3 '├─ AVG SCORE  ', lv_avg.
   WRITE: /3 '├─ PASSED       ', lv_passed.
@@ -255,7 +244,7 @@ FORM search_student_by_id.
     INTO @gs_student_t
     WHERE studentid EQ @p_sid.
   IF sy-subrc = 0.
-    WRITE: /1 '📝 SEARCHED STUDENT '.
+    WRITE: /1  '@08@', 'SEARCHED STUDENT'.
     WRITE: /3 '├─ STUDENT ID     ', gs_student_t-studentid.
     WRITE: /3 '├─ NAME           ', gs_student_t-studentname.
     WRITE: /3 '├─ GENDER         ', gs_student_t-studentgen.
@@ -263,7 +252,7 @@ FORM search_student_by_id.
     WRITE: /3 '└─ GRADE          ', gs_student_t-studentgrade.
     WRITE: /.
   ELSE.
-    WRITE: /1 '❌ STUDENT NOT FOUND'.
+    WRITE: /1 '@0A@', 'STUDENT NOT FOUND'.
   ENDIF.
 
 ENDFORM.
@@ -274,7 +263,7 @@ FORM search_student_by_name.
     INTO @gs_student_t
     WHERE studentname EQ @p_sname.
   IF sy-subrc = 0.
-    WRITE: /1 '📝 SEARCHED STUDENT '.
+    WRITE: /1  '@08@', 'SEARCHED STUDENT'.
     WRITE: /3 '├─ STUDENT ID     ', gs_student_t-studentid.
     WRITE: /3 '├─ NAME           ', gs_student_t-studentname.
     WRITE: /3 '├─ GENDER         ', gs_student_t-studentgen.
@@ -282,7 +271,7 @@ FORM search_student_by_name.
     WRITE: /3 '└─ GRADE          ', gs_student_t-studentgrade.
     WRITE: /.
   ELSE.
-    WRITE: /1 '❌ STUDENT NOT FOUND'.
+    WRITE: /1 '@0A@', 'STUDENT NOT FOUND'.
   ENDIF.
 
 ENDFORM.
@@ -294,8 +283,15 @@ FORM update_student_by_id.
     WHERE studentid EQ @p_uid.
 
   IF sy-subrc = 0.
+
+    IF p_name IS NOT INITIAL.
     gs_student_t-studentname = p_name.
+    ENDIF.
+
+    IF p_score IS NOT INITIAL.
     gs_student_t-studentscore = p_score.
+    ENDIF.
+
     gs_student_t-studentgrade = lcl_grade_converter=>convertscoretograde( p_score ).
     IF p_male EQ 'X'.
       gs_student_t-studentgen = 'M'.
@@ -396,12 +392,12 @@ FORM display_top_student.
   PERFORM find_top_student.
 
   IF ls_max_grade_student IS NOT INITIAL.
-    WRITE: /1 '🏆 TOP STUDENT'.
+    WRITE: /1  '@10@', 'TOP STUDENT'.
     WRITE: /3 '├─ NAME           ', ls_max_grade_student-studentname.
     WRITE: /3 '└─ SCORE          ', ls_max_grade_student-studentscore.
     WRITE: /.
   ELSE.
-    WRITE: /1 '└─ ⚠️  NO DATA FOUND'.
+    WRITE: /1 '@0A@', '└─ ⚠️  NO DATA FOUND'.
     WRITE: /.
   ENDIF.
 ENDFORM.
@@ -422,14 +418,14 @@ FORM list_students_by_score.
     INTO TABLE @gt_student_t
     WHERE studentscore IN @s_score.
 
-  WRITE: /1 '🔍 STUDENTS IN RANGE'.
+  WRITE: /1 '@08@', 'STUDENTS IN RANGE'.
 
   IF lines( gt_student_t ) > 0.
     LOOP AT gt_student_t INTO gs_student_t.
       WRITE: /3 '├─   ', gs_student_t-studentname, gs_student_t-studentscore.
     ENDLOOP.
   ELSE.
-    WRITE: /3 '└─   ⚠️  NO DATA FOUND'.
+    WRITE: /3 '└─   ','@0A@','  NO DATA FOUND'.
   ENDIF.
   WRITE: /.
 ENDFORM.
