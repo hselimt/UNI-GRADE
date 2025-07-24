@@ -40,6 +40,7 @@
 ```abap
 lcl_age_calculator    → Calculates current age from birth date
 lcl_grade_converter   → Converts numerical scores to letter grades
+lcl_set_cell_color    → Sets cell colors according to score
 ```
 
 ### 📊 Grading System
