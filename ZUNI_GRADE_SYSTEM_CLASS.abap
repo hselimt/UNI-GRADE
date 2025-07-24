@@ -49,3 +49,32 @@ CLASS lcl_age_calculator IMPLEMENTATION.
     ENDIF.
   ENDMETHOD.
 ENDCLASS.
+
+CLASS lcl_set_cell_color DEFINITION.
+  PUBLIC SECTION.
+    CLASS-METHODS:
+      set_cell_color
+        IMPORTING
+          iv_grade TYPE zstudent_grade_de
+        RETURNING
+          VALUE(rv_color) TYPE lvc_s_scol.
+ENDCLASS.
+
+CLASS lcl_set_cell_color IMPLEMENTATION.
+  METHOD set_cell_color.
+    CLEAR rv_color.
+    rv_color-fname = 'STUDENTGRADE'.
+    rv_color-color-int = '1'.
+
+    CASE iv_grade.
+      WHEN 'FF'.
+        rv_color-color-col = col_negative.
+      WHEN 'DD' OR 'CD'.
+        rv_color-color-col = col_total.
+      WHEN 'CC' OR 'BC' OR 'BB'.
+        rv_color-color-col = col_key.
+      WHEN 'AB' OR 'AA'.
+        rv_color-color-col = col_positive.
+    ENDCASE.
+  ENDMETHOD.
+ENDCLASS.
