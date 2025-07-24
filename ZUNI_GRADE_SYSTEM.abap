@@ -5,25 +5,25 @@ INCLUDE zuni_grade_system_data.
 INCLUDE zuni_grade_system_class.
 
 INITIALIZATION.
-  sy-title = 'UNI GRADE SYSTEM'.
+  sy-title = 'UNI GRADE SYSTEM'. " set title
 
 START-OF-SELECTION.
   PERFORM initialize_data.
-  CALL SCREEN 0001.
+  CALL SCREEN 0001. " opens screen called 0001
 
 MODULE STATUS_0001 OUTPUT.
 
 ENDMODULE.
 
 MODULE USER_COMMAND_0001 INPUT.
-  CASE sy-ucomm.
+  CASE sy-ucomm. " stores the function code of the last user action
     WHEN 'ADD'.
       IF p_name IS NOT INITIAL AND p_score >= 0 AND p_score <= 100.
         PERFORM process_student_data.
         PERFORM handle_failed_students.
         PERFORM calculate_next_student_id.
         PERFORM display_added_student_details.
-        LEAVE TO LIST-PROCESSING AND RETURN TO SCREEN 0001.
+        LEAVE TO LIST-PROCESSING AND RETURN TO SCREEN 0001. " outputs texts than returns to screen
         CLEAR: p_name, p_lname, p_bdate, p_score, p_mail, gv_mrad, gv_frad.
       ELSE.
         MESSAGE 'FILL REQUIRED FIELDS' TYPE 'E'.
@@ -93,15 +93,15 @@ FORM clear_all_data_with_popup.
       default_button        = '2'
       display_cancel_button = space
     IMPORTING
-      answer                = lv_answer.
+      answer                = lv_answer. " imports users answer
 
   IF lv_answer = '1'.
     DELETE FROM zstudent_t.
-    DELETE FROM zfstudent_t.
-    COMMIT WORK.
+    DELETE FROM zfstudent_t. " empty both tables
+    COMMIT WORK. " updates database with recent changes
 
     lv_next_student_id = 1.
-    CLEAR: gt_student_t, gt_failed_t.
+    CLEAR: gt_student_t, gt_failed_t. " empties both tables and cleans memory
     MESSAGE 'ALL STUDENTS HAVE BEEN DELETED' TYPE 'S'.
   ENDIF.
 ENDFORM.
@@ -125,10 +125,10 @@ FORM display_failed_students.
 
   WRITE: /1 '@17@', 'FAILED STUDENTS'.
 
-  SELECT COUNT(*) FROM zfstudent_t INTO @lv_count.
+  SELECT COUNT(*) FROM zfstudent_t INTO @lv_count. " count all rows
 
-  IF lv_count > 0.
-    SELECT * FROM zfstudent_t INTO TABLE @gt_failed_t.
+  IF lv_count > 0. " checks if there are any rows in the table
+    SELECT * FROM zfstudent_t INTO TABLE @gt_failed_t. " fetches data and loops thru table
 
     LOOP AT gt_failed_t INTO gs_failed_t.
       WRITE: /3 |├─ { gs_failed_t-studentname } { gs_failed_t-studentscore }|.
@@ -141,12 +141,12 @@ ENDFORM.
 
 FORM display_statistics.
   DATA lv_total   TYPE i.
-  DATA lv_avg     TYPE p DECIMALS 2.
+  DATA lv_avg     TYPE p DECIMALS 2. " ,00 type
   DATA lv_passed  TYPE i.
   DATA lv_failed  TYPE i.
 
-  SELECT COUNT(*) FROM zstudent_t INTO @lv_total.
-  SELECT AVG( studentscore ) FROM zstudent_t INTO @lv_avg.
+  SELECT COUNT(*) FROM zstudent_t INTO @lv_total. " select all rows from zstudent table
+  SELECT AVG( studentscore ) FROM zstudent_t INTO @lv_avg. " calculates avg student score
   SELECT COUNT(*) FROM zstudent_t INTO @lv_passed WHERE studentscore >= 35.
   lv_failed = lv_total - lv_passed.
 
@@ -167,7 +167,7 @@ ENDFORM.
 
 FORM load_student_data.
   SELECT * FROM zstudent_t
-    INTO CORRESPONDING FIELDS OF TABLE @gt_student_t.
+    INTO CORRESPONDING FIELDS OF TABLE @gt_student_t. " fetches suitably into gt_student table
 ENDFORM.
 
 FORM update_age_of_all_students.
@@ -208,14 +208,14 @@ FORM create_student_salv.
   TRY.
       DATA(lo_columns) = go_salv_students->get_columns( ).
       lo_columns->set_color_column( 'ROW_COLOR' ).
-    CATCH cx_salv_data_error.
+    CATCH cx_salv_data_error. " catches salv data error silently
   ENDTRY.
 
   TRY.
       DATA(lt_columns) = lo_columns->get( ).
       LOOP AT lt_columns INTO DATA(ls_column).
         ls_column-r_column->set_alignment(
-            value = if_salv_c_alignment=>centered
+            value = if_salv_c_alignment=>centered " set cell values as centered
         ).
       ENDLOOP.
     CATCH cx_salv_data_error.
@@ -226,7 +226,7 @@ FORM create_student_salv.
       lo_sorts->add_sort(
       EXPORTING
         columnname = 'STUDENTSCORE'
-        sequence   = if_salv_c_sort=>sort_down
+        sequence   = if_salv_c_sort=>sort_down " sorts the rows
     ).
     CATCH cx_salv_msg.
   ENDTRY.
@@ -239,7 +239,7 @@ FORM set_cell_color.
   SELECT * FROM zstudent_t
     INTO CORRESPONDING FIELDS OF TABLE @gt_cell_color.
   LOOP AT gt_cell_color INTO gs_cell_color.
-    DATA: lt_color TYPE lvc_t_scol.
+    DATA: lt_color TYPE lvc_t_scol. " table to store cell coloring information
     CLEAR lt_color.
     DATA(ls_color) = lcl_set_cell_color=>set_cell_color( gs_cell_color-studentgrade ).
 
@@ -263,7 +263,7 @@ FORM search_student_by_id.
   SELECT SINGLE * FROM zstudent_t
     INTO @gs_student_t
     WHERE studentid EQ @p_sid.
-  IF sy-subrc = 0.
+  IF sy-subrc = 0. " searched student id equals to current student id successfully completed
     WRITE: /1  '@08@', 'SEARCHED STUDENT'.
     WRITE: /3 '├─ STUDENT ID:      ', gs_student_t-studentid.
     WRITE: /3 '├─ NAME:            ', gs_student_t-studentname.
@@ -326,10 +326,10 @@ FORM update_student_by_id.
     ENDIF.
 
     IF p_mail IS NOT INITIAL AND p_mail CS '@' AND p_mail CS '.'.
-      gs_student_t-studentmail = p_mail.
+      gs_student_t-studentmail = p_mail. " it sets mail if it contains @ and . strings
     ENDIF.
 
-    IF gv_mrad EQ 'X'.
+    IF gv_mrad EQ 'X'. " if male radio button is checked
       gs_student_t-studentgen = 'M'.
     ELSEIF gv_frad EQ 'X'.
       gs_student_t-studentgen = 'F'.
@@ -338,10 +338,10 @@ FORM update_student_by_id.
     UPDATE zstudent_t FROM gs_student_t.
 
     IF sy-subrc = 0.
-      COMMIT WORK.
+      COMMIT WORK. " updates database
       MESSAGE 'STUDENT UPDATED SUCCESSFULLY' TYPE 'S'.
     ELSE.
-      ROLLBACK WORK.
+      ROLLBACK WORK. " reverts database changes
       MESSAGE 'ERROR UPDATING STUDENT' TYPE 'E'.
     ENDIF.
   ELSE.
@@ -373,7 +373,8 @@ FORM prepare_student_record.
   ENDIF.
 
   IF p_bdate <= sy-datum AND p_mail CS '@' AND p_mail CS '.'.
-    APPEND gs_student_t TO gt_student_t.
+    " if current date >= birth date and mail contains @ and .
+    APPEND gs_student_t TO gt_student_t. " adds structure into table
   ELSE.
     MESSAGE 'MAKE SURE TO ENTER VALID VALUES' TYPE 'E'.
   ENDIF.
@@ -383,7 +384,7 @@ ENDFORM.
 FORM save_student_record.
   INSERT zstudent_t FROM @gs_student_t.
 
-  IF sy-subrc = 0.
+  IF sy-subrc = 0. " if process successfull
     COMMIT WORK.
     MESSAGE 'STUDENT ADDED' TYPE 'S'.
   ELSE.
@@ -399,10 +400,10 @@ ENDFORM.
 
 FORM process_failed_student.
   IF gs_student_t-studentscore BETWEEN 34 AND 35.
-    PERFORM upgrade_student_grade.
+    PERFORM upgrade_student_grade. " it takes the ceiling of score between 34 and 35
     MESSAGE 'STUDENT''S GRADE UPGRADED TO DD WITH THE SCORE OF 35' TYPE 'I'.
   ELSE.
-    PERFORM add_to_failed_students.
+    PERFORM add_to_failed_students. " if not in between of 34 and 35
     MESSAGE 'STUDENT HAS FAILED THE CLASS AND ADDED TO FAILED LIST' TYPE 'I'.
   ENDIF.
 ENDFORM.
@@ -416,13 +417,13 @@ FORM upgrade_student_grade.
                    WHERE studentid = @gs_student_t-studentid.
 
   IF sy-subrc = 0.
-    COMMIT WORK.
+    COMMIT WORK. " updates database if process successfull
   ENDIF.
 ENDFORM.
 
 FORM add_to_failed_students.
-  CLEAR gs_failed_t.
-  MOVE-CORRESPONDING gs_student_t TO gs_failed_t.
+  CLEAR gs_failed_t. " clears structure
+  MOVE-CORRESPONDING gs_student_t TO gs_failed_t. " moves matching areas to another structure
 
   INSERT zfstudent_t FROM @gs_failed_t.
 
@@ -434,7 +435,7 @@ ENDFORM.
 FORM display_top_student.
   PERFORM find_top_student.
 
-  IF ls_max_grade_student IS NOT INITIAL.
+  IF ls_max_grade_student IS NOT INITIAL. " if not empty
     WRITE: /1  '@10@', 'TOP STUDENT'.
     WRITE: /3 '├─ FULLNAME:        ', ls_max_grade_student-studentname.
     WRITE: /3 '├─ NAME:            ', ls_max_grade_student-studentlname.
@@ -448,9 +449,9 @@ FORM display_top_student.
 ENDFORM.
 
 FORM find_top_student.
-  CLEAR: ls_max_grade_student, lv_highest_score.
+  CLEAR: ls_max_grade_student, lv_highest_score. " clear both areas
 
-  SELECT MAX( studentscore ) FROM zstudent_t INTO @lv_highest_score.
+  SELECT MAX( studentscore ) FROM zstudent_t INTO @lv_highest_score. " selects max value
   IF sy-subrc = 0 AND lv_highest_score IS NOT INITIAL.
     SELECT SINGLE * FROM zstudent_t
       INTO @ls_max_grade_student
