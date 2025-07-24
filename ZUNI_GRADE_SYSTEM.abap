@@ -4,84 +4,96 @@ INCLUDE <icon>.
 INCLUDE zuni_grade_system_data.
 INCLUDE zuni_grade_system_class.
 
-SELECTION-SCREEN BEGIN OF BLOCK stud_inf WITH FRAME TITLE TEXT-001.
-  PARAMETERS: p_name    TYPE zstudentname_de LOWER CASE,
-              p_lname   TYPE zstudentlname_de LOWER CASE,
-              p_bdate   TYPE zstudentbdate_de,
-              p_score   TYPE zstudent_score_de,
-              p_mail    TYPE zstudentmail_de,
-              p_male    RADIOBUTTON GROUP gen,
-              p_female  RADIOBUTTON GROUP gen.
-SELECTION-SCREEN END OF BLOCK stud_inf.
-
-SELECTION-SCREEN SKIP 1.
-
-SELECTION-SCREEN BEGIN OF BLOCK search WITH FRAME TITLE TEXT-005.
-  SELECTION-SCREEN BEGIN OF BLOCK sname.
-    PARAMETERS: p_sname TYPE zstudentname_de LOWER CASE,
-                p_slname TYPE zstudentlname_de LOWER CASE,
-                p_sid   TYPE zstudentid_de.
-  SELECTION-SCREEN END OF BLOCK sname.
-SELECTION-SCREEN END OF BLOCK search.
-
-SELECTION-SCREEN SKIP 1.
-
-SELECTION-SCREEN BEGIN OF BLOCK update WITH FRAME TITLE TEXT-006.
-  SELECTION-SCREEN BEGIN OF BLOCK usid.
-    PARAMETERS: P_uid TYPE zstudentid_de.
-  SELECTION-SCREEN END OF BLOCK usid.
-SELECTION-SCREEN END OF BLOCK update.
-
-SELECTION-SCREEN SKIP 1.
-
-SELECTION-SCREEN BEGIN OF BLOCK ops WITH FRAME TITLE TEXT-003.
-  PARAMETERS: p_add     AS CHECKBOX,
-              p_update  AS CHECKBOX,
-              p_clear   AS CHECKBOX,
-              p_stats   AS CHECKBOX.
-SELECTION-SCREEN END OF BLOCK ops.
-
-SELECTION-SCREEN SKIP 1.
-
-SELECTION-SCREEN BEGIN OF BLOCK filter WITH FRAME TITLE TEXT-004.
-  SELECT-OPTIONS: s_score FOR gs_student_t-studentscore.
-SELECTION-SCREEN END OF BLOCK filter.
-
 INITIALIZATION.
-
-AT SELECTION-SCREEN.
-  IF p_add IS INITIAL AND p_update IS INITIAL AND p_clear IS INITIAL AND p_stats IS INITIAL AND p_sid IS INITIAL AND p_sname IS INITIAL AND p_slname IS INITIAL AND s_score IS INITIAL.
-    MESSAGE 'SELECT AN OPERATION' TYPE 'E'.
-  ENDIF.
-
-AT SELECTION-SCREEN OUTPUT.
-  PERFORM initialize_data.
+  sy-title = 'UNI GRADE SYSTEM'.
 
 START-OF-SELECTION.
-  IF p_add EQ 'X' AND p_score >= 0 AND p_score <= 100.
-    PERFORM process_student_data.
-    PERFORM handle_failed_students.
-  ENDIF.
+  PERFORM initialize_data.
+  CALL SCREEN 0001.
 
-  IF p_clear EQ 'X'.
-    PERFORM clear_all_data_with_popup.
-  ENDIF.
+MODULE STATUS_0001 OUTPUT.
 
-  PERFORM display_selected_information.
+ENDMODULE.
+
+MODULE USER_COMMAND_0001 INPUT.
+  CASE sy-ucomm.
+    WHEN 'ADD'.
+      IF p_name IS NOT INITIAL AND p_score >= 0 AND p_score <= 100.
+        PERFORM process_student_data.
+        PERFORM handle_failed_students.
+        PERFORM calculate_next_student_id.
+        PERFORM display_added_student_details.
+        LEAVE TO LIST-PROCESSING AND RETURN TO SCREEN 0001.
+        CLEAR: p_name, p_lname, p_bdate, p_score, p_mail, gv_mrad, gv_frad.
+      ELSE.
+        MESSAGE 'FILL REQUIRED FIELDS' TYPE 'E'.
+      ENDIF.
+
+    WHEN 'DEL'.
+      PERFORM clear_all_data_with_popup.
+
+    WHEN 'UPD'.
+      IF p_uid IS NOT INITIAL.
+        PERFORM update_student_by_id.
+        CLEAR: p_uid, p_name, p_lname, p_bdate, p_score, p_mail, gv_mrad, gv_frad.
+      ELSE.
+        MESSAGE 'ENTER STUDENT ID' TYPE 'E'.
+      ENDIF.
+
+    WHEN 'SEARCH'.
+      IF p_sid IS NOT INITIAL.
+        PERFORM search_student_by_id.
+        LEAVE TO LIST-PROCESSING AND RETURN TO SCREEN 0001.
+      ELSEIF p_sname IS NOT INITIAL AND p_slname IS NOT INITIAL.
+        PERFORM search_student_by_name.
+        LEAVE TO LIST-PROCESSING AND RETURN TO SCREEN 0001.
+      ELSE.
+        MESSAGE 'FILL REQUIRED FIELDS' TYPE 'E'.
+      ENDIF.
+
+    WHEN 'FILTER'.
+      IF p_score1 IS NOT INITIAL AND p_score2 IS NOT INITIAL.
+        PERFORM list_students_by_score.
+        LEAVE TO LIST-PROCESSING AND RETURN TO SCREEN 0001.
+      ELSE.
+        MESSAGE 'ENTER TOP AND BOTTOM SCORES' TYPE 'E'.
+      ENDIF.
+
+    WHEN 'ALVVIEW'.
+      PERFORM set_cell_color.
+      PERFORM create_student_salv.
+
+    WHEN 'STATS'.
+      PERFORM display_statistics.
+      LEAVE TO LIST-PROCESSING AND RETURN TO SCREEN 0001.
+
+    WHEN 'FSTUDENTS'.
+      PERFORM display_failed_students.
+      LEAVE TO LIST-PROCESSING AND RETURN TO SCREEN 0001.
+
+    WHEN 'SSTUDENTS'.
+      PERFORM display_top_student.
+      LEAVE TO LIST-PROCESSING AND RETURN TO SCREEN 0001.
+
+    WHEN 'BACK' OR 'EXIT' OR 'CANCEL'.
+      LEAVE TO SCREEN 0.
+
+  ENDCASE.
+ENDMODULE.
 
 FORM clear_all_data_with_popup.
   DATA lv_answer TYPE c.
 
   CALL FUNCTION 'POPUP_TO_CONFIRM'
     EXPORTING
-      titlebar            = 'CONFIRM DATA DELETION'
-      text_question       = 'YOU WANT TO DELETE ALL STUDENT DATA?'
-      text_button_1       = 'YES'
-      text_button_2       = 'NO'
-      default_button      = '2'
+      titlebar              = 'CONFIRM DATA DELETION'
+      text_question         = 'YOU WANT TO DELETE ALL STUDENT DATA?'
+      text_button_1         = 'YES'
+      text_button_2         = 'NO'
+      default_button        = '2'
       display_cancel_button = space
     IMPORTING
-      answer              = lv_answer.
+      answer                = lv_answer.
 
   IF lv_answer = '1'.
     DELETE FROM zstudent_t.
@@ -91,40 +103,6 @@ FORM clear_all_data_with_popup.
     lv_next_student_id = 1.
     CLEAR: gt_student_t, gt_failed_t.
     MESSAGE 'ALL STUDENTS HAVE BEEN DELETED' TYPE 'S'.
-  ENDIF.
-ENDFORM.
-
-FORM display_selected_information.
-  WRITE: /1 '══════════════════════════════════════════════════════════════════════════'.
-  WRITE: /1 '         UNIVERSITY GRADE SYSTEM REPORT                                 '.
-  WRITE: /1 '══════════════════════════════════════════════════════════════════════════'.
-  WRITE: /.
-
-  IF p_add EQ 'X' AND gs_student_t IS NOT INITIAL AND p_score >= 0 AND p_score <= 100.
-    PERFORM display_added_student_details.
-  ENDIF.
-
-  IF p_update EQ 'X' AND p_uid IS NOT INITIAL.
-    PERFORM update_student_by_id.
-  ENDIF.
-
-  IF p_stats EQ 'X'.
-    PERFORM create_student_salv.
-    PERFORM display_failed_students.
-    PERFORM display_top_student.
-    PERFORM display_statistics.
-  ENDIF.
-
-  IF s_score IS NOT INITIAL.
-    PERFORM list_students_by_score.
-  ENDIF.
-
-  IF p_sname IS NOT INITIAL.
-    PERFORM search_student_by_name.
-  ENDIF.
-
-  IF p_sid IS NOT INITIAL.
-    PERFORM search_student_by_id.
   ENDIF.
 ENDFORM.
 
@@ -153,7 +131,7 @@ FORM display_failed_students.
     SELECT * FROM zfstudent_t INTO TABLE @gt_failed_t.
 
     LOOP AT gt_failed_t INTO gs_failed_t.
-      WRITE: /3 '├─  ', gs_failed_t-studentname.
+      WRITE: /3 |├─ { gs_failed_t-studentname } { gs_failed_t-studentscore }|.
     ENDLOOP.
   ELSE.
     WRITE: /3 '└─ ','@0A@','NO DATA FOUND'.
@@ -210,7 +188,7 @@ FORM update_age_of_all_students.
 
   COMMIT WORK.
 
- ENDFORM.
+ENDFORM.
 
 
 FORM load_failed_student_data.
@@ -219,19 +197,56 @@ FORM load_failed_student_data.
 ENDFORM.
 
 FORM create_student_salv.
-  SELECT * FROM zstudent_t
-    INTO CORRESPONDING FIELDS OF TABLE @gt_student_t.
-    TRY.
-      cl_salv_table=>factory(
+
+  cl_salv_table=>factory(
         IMPORTING
           r_salv_table = go_salv_students
         CHANGING
-          t_table      = gt_student_t
+          t_table      = gt_cell_color
       ).
-    CATCH CX_SALV_MSG.
-    ENDTRY.
+
+  TRY.
+      DATA(lo_columns) = go_salv_students->get_columns( ).
+      lo_columns->set_color_column( 'ROW_COLOR' ).
+    CATCH cx_salv_data_error.
+  ENDTRY.
+
+  TRY.
+      DATA(lt_columns) = lo_columns->get( ).
+      LOOP AT lt_columns INTO DATA(ls_column).
+        ls_column-r_column->set_alignment(
+            value = if_salv_c_alignment=>centered
+        ).
+      ENDLOOP.
+    CATCH cx_salv_data_error.
+  ENDTRY.
+
+  TRY.
+      DATA(lo_sorts) = go_salv_students->get_sorts( ).
+      lo_sorts->add_sort(
+      EXPORTING
+        columnname = 'STUDENTSCORE'
+        sequence   = if_salv_c_sort=>sort_down
+    ).
+    CATCH cx_salv_msg.
+  ENDTRY.
 
   go_salv_students->display( ).
+
+ENDFORM.
+
+FORM set_cell_color.
+  SELECT * FROM zstudent_t
+    INTO CORRESPONDING FIELDS OF TABLE @gt_cell_color.
+  LOOP AT gt_cell_color INTO gs_cell_color.
+    DATA: lt_color TYPE lvc_t_scol.
+    CLEAR lt_color.
+    DATA(ls_color) = lcl_set_cell_color=>set_cell_color( gs_cell_color-studentgrade ).
+
+    APPEND ls_color TO lt_color.
+    gs_cell_color-row_color = lt_color.
+    MODIFY gt_cell_color FROM gs_cell_color.
+  ENDLOOP.
 ENDFORM.
 
 FORM calculate_next_student_id.
@@ -300,23 +315,23 @@ FORM update_student_by_id.
       gs_student_t-studentlname = p_lname.
     ENDIF.
 
-    IF p_bdate IS NOT INITIAL.
+    IF p_bdate IS NOT INITIAL AND p_bdate <= sy-datum.
       gs_student_t-studentbdate = p_bdate.
       gs_student_t-studentage = lcl_age_calculator=>calculate_age( p_bdate ).
     ENDIF.
 
-    IF p_score IS NOT INITIAL.
+    IF p_score IS NOT INITIAL AND p_score >= 0 AND p_score <= 100.
       gs_student_t-studentscore = p_score.
       gs_student_t-studentgrade = lcl_grade_converter=>convertscoretograde( p_score ).
     ENDIF.
 
-    IF p_mail IS NOT INITIAL.
+    IF p_mail IS NOT INITIAL AND p_mail CS '@' AND p_mail CS '.'.
       gs_student_t-studentmail = p_mail.
     ENDIF.
 
-    IF p_male EQ 'X'.
+    IF gv_mrad EQ 'X'.
       gs_student_t-studentgen = 'M'.
-    ELSEIF p_female EQ 'X'.
+    ELSEIF gv_frad EQ 'X'.
       gs_student_t-studentgen = 'F'.
     ENDIF.
 
@@ -351,9 +366,9 @@ FORM prepare_student_record.
   gs_student_t-studentgrade = lcl_grade_converter=>convertscoretograde( p_score ).
   gs_student_t-studentage   = lcl_age_calculator=>calculate_age( p_bdate ).
 
-  IF p_male EQ 'X'.
+  IF gv_mrad EQ 'X'.
     gs_student_t-studentgen = 'M'.
-  ELSEIF p_female EQ 'X'.
+  ELSEIF gv_frad EQ 'X'.
     gs_student_t-studentgen = 'F'.
   ENDIF.
 
@@ -446,7 +461,7 @@ ENDFORM.
 FORM list_students_by_score.
   SELECT * FROM zstudent_t
     INTO CORRESPONDING FIELDS OF TABLE @gt_student_t
-    WHERE studentscore IN @s_score.
+    WHERE studentscore >= @p_score1 AND studentscore <= @p_score2.
 
   WRITE: /1 '@08@', 'STUDENTS IN RANGE'.
 
