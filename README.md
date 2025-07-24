@@ -1,6 +1,5 @@
 # 📚 UNI-GRADE
 
-![Selection Screen](ZUGS.png)
 ![Main Screen](UGS.png)
 ![SALV screen](SALV.png)
 
