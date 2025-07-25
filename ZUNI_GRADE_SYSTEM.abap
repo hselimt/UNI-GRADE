@@ -450,7 +450,7 @@ FORM display_top_student.
     WRITE: /3 '└─ SCORE:           ', ls_max_grade_student-studentscore.
     WRITE: /.
   ELSE.
-    WRITE: /1 '@0A@', '└─ ⚠️  NO DATA FOUND'.
+    WRITE: /1 '@0A@', '└─  ','@0A@','   NO DATA FOUND'.
     WRITE: /.
   ENDIF.
 ENDFORM.
