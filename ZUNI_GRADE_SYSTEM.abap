@@ -11,11 +11,11 @@ START-OF-SELECTION.
   PERFORM initialize_data.
   CALL SCREEN 0001. " opens screen called 0001
 
-MODULE STATUS_0001 OUTPUT.
+MODULE status_0001 OUTPUT.
 
 ENDMODULE.
 
-MODULE USER_COMMAND_0001 INPUT.
+MODULE user_command_0001 INPUT.
   CASE sy-ucomm. " stores the function code of the last user action
     WHEN 'ADD'.
       IF p_name IS NOT INITIAL AND p_score >= 0 AND p_score <= 100.
@@ -57,6 +57,13 @@ MODULE USER_COMMAND_0001 INPUT.
         LEAVE TO LIST-PROCESSING AND RETURN TO SCREEN 0001.
       ELSE.
         MESSAGE 'ENTER TOP AND BOTTOM SCORES' TYPE 'E'.
+      ENDIF.
+
+    WHEN 'SENDMAIL'.
+      IF p_mid IS NOT INITIAL.
+        PERFORM send_mail_to_student.
+      ELSE.
+        PERFORM send_mail_to_students.
       ENDIF.
 
     WHEN 'ALVVIEW'.
@@ -474,4 +481,94 @@ FORM list_students_by_score.
     WRITE: /3 '└─   ','@0A@','   NO DATA FOUND'.
   ENDIF.
   WRITE: /.
+ENDFORM.
+
+FORM send_mail_to_student.
+  SELECT SINGLE * FROM zstudent_t
+      INTO @gs_student_t
+      WHERE studentid EQ @p_mid.
+
+  lv_mail_adress = gs_student_t-studentmail.
+
+  IF gs_student_t-studentgrade NE 'FF'.
+    mail_msg = 'CONGRATS YOU SUCCESSFULLY PASSED THE CLASS'.
+  ELSE.
+    mail_msg = 'WE ARE SORRY TO INFORM YOU THAT YOU FAILED THE CLASS'.
+  ENDIF.
+
+  CLEAR: recipients, object_hd.
+  doc_chng-obj_descr = 'Grade Report'.
+  object_hd-line = |HI! { gs_student_t-studentname } { gs_student_t-studentlname }|.
+  APPEND object_hd.
+  object_hd-line = mail_msg.
+  APPEND object_hd.
+  object_hd-line = | YOUR SCORE IS: { gs_student_t-studentscore } |.
+  recipients-rec_type = 'U'.
+  recipients-receiver = lv_mail_adress.
+  APPEND recipients.
+
+  CALL FUNCTION 'SO_NEW_DOCUMENT_SEND_API1'
+    EXPORTING
+      document_data      = doc_chng
+      document_type      = 'RAW'
+      put_in_outbox      = 'X'
+      commit_work        = 'X'
+    TABLES
+      object_content     = object_hd
+      receivers          = recipients
+    EXCEPTIONS
+      too_many_receivers = 1
+      document_not_sent  = 2
+      OTHERS             = 99.
+  IF sy-subrc = 0.
+    MESSAGE 'MAIL HAS BEEN SENT' TYPE 'S'.
+  ELSE.
+    MESSAGE 'MAIL SENDING FAILED' TYPE 'E'.
+  ENDIF.
+ENDFORM.
+
+FORM send_mail_to_students.
+  SELECT * FROM zstudent_t
+  INTO CORRESPONDING FIELDS OF TABLE gt_student_t.
+
+  LOOP AT gt_student_t INTO gs_student_t.
+    lv_mail_adress = gs_student_t-studentmail.
+
+    IF gs_student_t-studentgrade NE 'FF'.
+      mail_msg = 'CONGRATS YOU SUCCESSFULLY PASSED THE CLASS'.
+    ELSE.
+      mail_msg = 'WE ARE SORRY TO INFORM YOU THAT YOU FAILED THE CLASS'.
+    ENDIF.
+
+    CLEAR: recipients, object_hd.
+    doc_chng-obj_descr = 'Grade Report'.
+    object_hd-line = |HI! { gs_student_t-studentname } { gs_student_t-studentlname }|.
+    APPEND object_hd.
+    object_hd-line = mail_msg.
+    APPEND object_hd.
+    object_hd-line = | YOUR SCORE IS: { gs_student_t-studentscore } |.
+    recipients-rec_type = 'U'.
+    recipients-receiver = lv_mail_adress.
+    APPEND recipients.
+
+    CALL FUNCTION 'SO_NEW_DOCUMENT_SEND_API1'
+      EXPORTING
+        document_data      = doc_chng
+        document_type      = 'RAW'
+        put_in_outbox      = 'X'
+        commit_work        = 'X'
+      TABLES
+        object_content     = object_hd
+        receivers          = recipients
+      EXCEPTIONS
+        too_many_receivers = 1
+        document_not_sent  = 2
+        OTHERS             = 99.
+    IF sy-subrc = 0.
+      MESSAGE 'MAIL HAS BEEN SENT' TYPE 'S'.
+    ELSE.
+      MESSAGE 'MAIL SENDING FAILED' TYPE 'E'.
+    ENDIF.
+  ENDLOOP.
+
 ENDFORM.
