@@ -45,5 +45,13 @@ DATA: p_name   TYPE zstudentname_de,
       p_slname TYPE zstudentlname_de,
       p_sid    TYPE zstudentid_de,
       p_uid    TYPE zstudentid_de,
+      p_mid    TYPE zstudentid_de,
       p_score1 TYPE i,
       p_score2 TYPE i.
+
+DATA: recipients TYPE somlreci1 OCCURS 0 WITH HEADER LINE, " Who gets mail
+* Dynamic internal table (grows as needed) and creates work area with the same name
+      doc_chng   TYPE sodocchgi1, " Mail subject and properties
+      object_hd  TYPE solisti1 OCCURS 0 WITH HEADER LINE, " Mail text
+      mail_msg   TYPE c LENGTH 100,
+      lv_mail_adress TYPE c LENGTH 30.
