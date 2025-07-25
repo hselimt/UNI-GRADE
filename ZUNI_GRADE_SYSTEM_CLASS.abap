@@ -35,7 +35,7 @@ CLASS lcl_age_calculator DEFINITION.
     CLASS-METHODS:
       calculate_age
         IMPORTING
-          iv_bdate    TYPE zstudentbdate_de " import b date
+          iv_bdate      TYPE zstudentbdate_de " import b date
         RETURNING
           VALUE(rv_age) TYPE zstudentage_de. " return age
 ENDCLASS.
@@ -55,7 +55,7 @@ CLASS lcl_set_cell_color DEFINITION.
     CLASS-METHODS:
       set_cell_color
         IMPORTING
-          iv_grade TYPE zstudent_grade_de
+          iv_grade        TYPE zstudent_grade_de
         RETURNING
           VALUE(rv_color) TYPE lvc_s_scol. " lvc_s_scol is a structure used to define the color properties
 ENDCLASS.
