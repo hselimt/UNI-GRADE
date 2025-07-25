@@ -483,7 +483,7 @@ FORM list_students_by_score.
   WRITE: /.
 ENDFORM.
 
-FORM send_mail_to_student.
+FORM send_mail_to_student. " if p_mid is not initial
   SELECT SINGLE * FROM zstudent_t
       INTO @gs_student_t
       WHERE studentid EQ @p_mid.
@@ -499,7 +499,7 @@ FORM send_mail_to_student.
   CLEAR: recipients, object_hd.
   doc_chng-obj_descr = 'Grade Report'.
   object_hd-line = |HI! { gs_student_t-studentname } { gs_student_t-studentlname }|.
-  APPEND object_hd.
+  APPEND object_hd. " Adds to mail_msg
   object_hd-line = mail_msg.
   APPEND object_hd.
   object_hd-line = | YOUR SCORE IS: { gs_student_t-studentscore } |.
@@ -507,7 +507,7 @@ FORM send_mail_to_student.
   recipients-receiver = lv_mail_adress.
   APPEND recipients.
 
-  CALL FUNCTION 'SO_NEW_DOCUMENT_SEND_API1'
+  CALL FUNCTION 'SO_NEW_DOCUMENT_SEND_API1' " mail sending function
     EXPORTING
       document_data      = doc_chng
       document_type      = 'RAW'
